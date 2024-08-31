@@ -13,3 +13,6 @@ def blind_scan():
     scan("go_home_middle")
     scan("go_home_right")
     return True
+
+
+

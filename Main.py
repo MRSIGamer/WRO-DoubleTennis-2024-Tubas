@@ -26,9 +26,9 @@ def get_Ball_pos():
     while True:
         # Retrieve the number of detected blocks and the block data
         sleep(1)
-        nr_blocks, blocks = pixy2.get_blocks(1, 2)
+        nr_blocks, blocks = pixy2.get_blocks(1, 3)
         if nr_blocks == 1:
-            print(blocks[0].x_center)
+            print(blocks[0].y_center)
 
         if nr_blocks == 0:
             print("no")
@@ -49,7 +49,12 @@ def main_game_with_pixy():
         Stop_Game()
         quit()
 
-
+LEFT_X_REF_MIN_NORMAL = 22
+LEFT_X_REF_MAX_NORMAL =  98
+MIDDLE_X_REF_MIN_NORMAL = 99
+MIDDLE_X_REF_MAX_NORMAL = 186
+RIGHT_X_REF_MIN_NORMAL = 187
+RIGHT_X_REF_MAX_NORMAL = 273
 
 
 
@@ -57,11 +62,13 @@ def main_game_with_pixy():
 if __name__ == "__main__":
 
     speaker.play_file("rampbotsound.wav")
+    print("started")
 
-    #Checks The Touch Sensor Is Pressed Then Released To Start The Game
-    # while True:
-    #     if movement.TouchSensor.is_pressed:
-    #         while True:
-    #             if movement.TouchSensor.is_released:
-    start_game()
-    quit()
+    #Checks The Touch Sensor Is Pr5essed Then Released To Start The Game
+    while True:
+        
+        if movement.TouchSensor.is_pressed:
+            while True:
+                if movement.TouchSensor.is_released:
+                    while True:
+                        get_Ball_pos()

@@ -311,7 +311,9 @@ class Movement:
         self.hiter_Motor.on_for_degrees(100, 20, True,True)
         self.catcher_Motor.on_for_degrees(100,-165,True,False)
         sleep(0.2)
-        self.hiter_Motor.on_for_degrees(-69, 100,True,True)
+        self.hiter_Motor.on_for_degrees(-100, 100,True,True)
+        sleep(1)
+        self.Turn_Hiter_Back()
 
 
     #A method that lifts the hiter and the catcher up to throw the ball weakly
@@ -320,7 +322,28 @@ class Movement:
         self.hiter_Motor.on_for_degrees(100, 20, True,True)
         self.catcher_Motor.on_for_degrees(100,-165,True,False)
         sleep(0.2)
-        self.hiter_Motor.on_for_degrees(-20, 100,True,True)
+        self.hiter_Motor.on_for_degrees(-60, 100,True,True)
+
+
+    def Throw_Ball_While_Running(self, speed : int, degrees : int, throw_degres : int):
+        """Throws the ball while running to make a quick throw"""
+        self.left_Motor.reset()
+        while self.left_Motor.degrees < degrees:
+            while self.left_Motor.degrees < throw_degres:
+                self.DriveBase.on(speed, speed)
+            else:
+                self.Throw_Ball_Weakly()
+                self.Gyro_Straight_Move_Degs(35, degrees - throw_degres)
+                break
+        else:
+            self.DriveBase.stop(brake=True)
+
+
+
+    def Throw_The_Ball_While_Driving(self, speed : int, degrees : int):
+        "Lifts The Catcher and Hiter Motors To Throw The Ball While The Robot Is Moving"
+        self.DriveBase.on_for_degrees(speed, speed, degrees, True, False)
+        self.Throw_Ball()
 
 
 
