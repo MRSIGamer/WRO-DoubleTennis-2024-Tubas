@@ -27,10 +27,13 @@ class Movement:
         self.right_Motor.polarity = MediumMotor.POLARITY_INVERSED
         #Sensors | Inputs
         self.GyroSensor = GyroSensor(INPUT_4)
+        self.RampGyroSensor = GyroSensor(INPUT_2)
         self.TouchSensor = TouchSensor(INPUT_3)
         #Setting up sensors
         self.GyroSensor.reset()
         self.GyroSensor.calibrate()
+        self.RampGyroSensor.reset()
+        self.RampGyroSensor.calibrate()
         
 
     #A method that spins the robot exactly 90 degrees to the right using the gyro sensor
@@ -144,6 +147,133 @@ class Movement:
                 self.DriveBase.on(0, speed)
         else:
             self.DriveBase.stop(brake=True)
+
+
+    #A method that drives the robot straight using a pd follower with gyro sensor for a limited time
+    def Drive_Straight_Untill_Ramping(self, speed : int):
+        """Drives The Robot Very Straight Using A PD Follower With Gyro Sensor
+           (The Speed And Degrees Should Be Positive only)
+        """
+ 
+
+        ramp_gyro_angle = self.RampGyroSensor.angle
+        while (self.RampGyroSensor.angle - ramp_gyro_angle) > -3:
+            self.DriveBase.on(speed, speed)
+            sleep(0.5)
+        else:
+            self.DriveBase.stop(brake=True)
+            self.Lift_Hiter()
+  
+        
+
+
+
+
+
+    #A method that drives the robot straight using a pd follower with gyro sensor for a limited time
+    def Gyro_Straight_Move_Untill_Ramping(self, speed : int):
+        """Drives The Robot Very Straight Using A PD Follower With Gyro Sensor
+           (The Speed And Degrees Should Be Positive only)
+        """
+        kp = 0.3
+        ki = 0.01
+        kd = 0.9
+
+        target_angle = 0
+
+        integral = 0
+        last_error = 0
+
+
+        max_speed = speed
+
+
+        gyro_angle = self.RampGyroSensor.angle
+        while  (self.RampGyroSensor.angle - gyro_angle) > -3:
+            error = target_angle - self.GyroSensor.angle
+
+            proportional = kp * error
+
+            integral += error
+
+            integral_term = ki * integral
+
+            derivative = error - last_error
+
+            derivative_term = kd * derivative
+
+            turn_rate = proportional + integral_term + derivative_term
+            turn_rate = max(-max_speed, min(max_speed, turn_rate))
+
+            left_motor_speed = SpeedPercent(max_speed + turn_rate)
+            right_motor_speed = SpeedPercent(max_speed - turn_rate)
+
+            self.left_Motor.on(left_motor_speed)
+            self.right_Motor.on(right_motor_speed)
+
+            last_error = error
+
+            max_speed += 1
+            sleep(0.1)
+        else:
+            self.DriveBase.stop(brake=True)
+            self.Lift_Hiter()
+
+
+
+
+    #A method that drives the robot straight using a pd follower with gyro sensor for a limited time
+    def Crazy_Gyro_Straight_Move_Untill_Ramping(self, speed : int):
+        """Drives The Robot Very Straight Using A PD Follower With Gyro Sensor
+           (The Speed And Degrees Should Be Positive only)
+        """
+        kp = 0.3
+        ki = 0.01
+        kd = 0.9
+
+        target_angle = 0
+
+        integral = 0
+        last_error = 0
+
+
+        max_speed = speed
+
+
+        gyro_angle = self.RampGyroSensor.angle
+        while  (self.RampGyroSensor.angle - gyro_angle) > -2:
+            error = target_angle - self.GyroSensor.angle
+
+            proportional = kp * error
+
+            integral += error
+
+            integral_term = ki * integral
+
+            derivative = error - last_error
+
+            derivative_term = kd * derivative
+
+            turn_rate = proportional + integral_term + derivative_term
+            turn_rate = max(-max_speed, min(max_speed, turn_rate))
+
+            left_motor_speed = SpeedPercent(max_speed + turn_rate)
+            right_motor_speed = SpeedPercent(max_speed - turn_rate)
+
+            self.left_Motor.on(left_motor_speed)
+            self.right_Motor.on(right_motor_speed)
+
+            last_error = error
+
+            max_speed += 2
+            sleep(0.1)
+        else:
+            self.DriveBase.stop(brake=True)
+            self.Lift_Hiter()
+
+
+
+
 
     #A method that drives the robot straight using a pd follower with gyro sensor for a limited time
     def Gyro_Straight_Move_Degs(self, speed : int, degrees : int):
@@ -264,8 +394,8 @@ class Movement:
     def Turn_Right_Wall_90_Degrees(self):
         """Turnns Exactly 90 Degrees To The Right When The Robot Is Moving By A Wall"""
         gyro_angle = self.GyroSensor.angle
-        while (self.GyroSensor.angle - gyro_angle) < 85:
-            self.DriveBase.on(25, 5)
+        while (self.GyroSensor.angle - gyro_angle) < 80:
+            self.DriveBase.on(35, 10)
         else:
             self.DriveBase.stop(brake=True)
 
@@ -273,13 +403,32 @@ class Movement:
     #A method that closes the catcher to catch a ball
     def Catch_Ball(self):
         """Closes the catcher to catch the ball in order to throw it"""
-        self.catcher_Motor.on_for_degrees(100, 165, True,True)
+        while True:
+
+            self.catcher_Motor.on(100, True, True)
+            sleep(0.3)
+            if self.catcher_Motor.is_stalled:
+                self.catcher_Motor.stop()
+                break
     
     
     #A method that opens the catcher to catch a ball
     def Open_Catcher(self):
         """Opens the catcher to throw the ball or realese it"""
-        self.catcher_Motor.on_for_degrees(-100, 165, True, False)
+        self.catcher_Motor.on(-100, True, True)
+        if self.catcher_Motor.is_stalled:
+            self.catcher_Motor.stop()
+            return True
+        
+
+
+    #A method that opens the catcher to catch a ball
+    def Open_Catcher_Without_Wait(self):
+        """Opens the catcher to throw the ball or realese it"""
+        self.catcher_Motor.on(-100, True, False)
+        if self.catcher_Motor.is_stalled:
+            self.catcher_Motor.stop()
+            return True
 
     
     #A mthod that opens the catcher untill the motor stalls 
@@ -293,26 +442,26 @@ class Movement:
     #A method that turns the hiter back
     def Turn_Hiter_Back(self):
         """Turns the hiter back to make sure that it throws the ball"""
-        while not self.hiter_Motor.is_stalled:
+        while True:
             self.hiter_Motor.on(100,True,True)
-        else:
-            self.hiter_Motor.stop()
+            if self.hiter_Motor.is_stalled:
+                self.hiter_Motor.stop()
+                break
 
     
     #A method that lifts the hiter motor up to throw the ball
     def Lift_Hiter(self):
         """Lifts The Hiter Up To Throw The Ball"""
-        self.hiter_Motor.on_for_degrees(100, 100,True,True)
+        self.Lift_Hiter_To_Throw()
+        self.Turn_Hiter_Back()
 
 
     #A method that lifts the hiter and the catcher up to throw the ball
     def Throw_Ball(self):
-        """Lifts The  Catcher And Hiter Motors To Throw The Ball"""
-        self.hiter_Motor.on_for_degrees(100, 20, True,True)
-        self.catcher_Motor.on_for_degrees(100,-165,True,False)
+        """Lifts The  Catcher And Hiter Motors To  Throw The Ball"""
+        self.Open_Catcher_Without_Wait()
         sleep(0.2)
-        self.hiter_Motor.on_for_degrees(-100, 100,True,True)
-        sleep(1)
+        self.Lift_Hiter_To_Throw()
         self.Turn_Hiter_Back()
 
 
@@ -322,7 +471,7 @@ class Movement:
         self.hiter_Motor.on_for_degrees(100, 20, True,True)
         self.catcher_Motor.on_for_degrees(100,-165,True,False)
         sleep(0.2)
-        self.hiter_Motor.on_for_degrees(-60, 100,True,True)
+        self.hiter_Motor.on_for_degrees(-20, 100,True,True)
 
 
     def Throw_Ball_While_Running(self, speed : int, degrees : int, throw_degres : int):
@@ -332,7 +481,7 @@ class Movement:
             while self.left_Motor.degrees < throw_degres:
                 self.DriveBase.on(speed, speed)
             else:
-                self.Throw_Ball_Weakly()
+                self.Lift_Hiter()
                 self.Gyro_Straight_Move_Degs(35, degrees - throw_degres)
                 break
         else:
@@ -345,5 +494,14 @@ class Movement:
         self.DriveBase.on_for_degrees(speed, speed, degrees, True, False)
         self.Throw_Ball()
 
+
+    def Lift_Hiter_To_Throw(self):
+        """Lifts The Hiter Up To Throw The Ball"""
+        while True:
+            self.hiter_Motor.on(-100, True, True)
+            if self.hiter_Motor.is_stalled:
+                self.hiter_Motor.stop()
+                break
+     
 
 

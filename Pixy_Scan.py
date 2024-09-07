@@ -6,24 +6,28 @@ from time import sleep, time
 from pixycamev3.pixy2 import Pixy2ConnectionError, Pixy2CommunicationError, Pixy2DataError
 
 # Constants for the camera reference values
-LEFT_X_REF_MIN_NORMAL = 22
-LEFT_X_REF_MAX_NORMAL =  98
-MIDDLE_X_REF_MIN_NORMAL = 99
-MIDDLE_X_REF_MAX_NORMAL = 186
-RIGHT_X_REF_MIN_NORMAL = 187
-RIGHT_X_REF_MAX_NORMAL = 273
+LEFT_X_REF_MIN_NORMAL = 0
+LEFT_X_REF_MAX_NORMAL =  120
+MIDDLE_X_REF_MIN_NORMAL = 121
+MIDDLE_X_REF_MAX_NORMAL = 200
+RIGHT_X_REF_MIN_NORMAL = 201
+RIGHT_X_REF_MAX_NORMAL = 300
+
 
 
 MAX_Y_REF = 200
 MIN_Y_REF = 55
 
+MIN_Y_REF_BACK = 55
+MAX_Y_REF_BACK = 200
 
-LEFT_X_REF_MIN_BACK = 65
-LEFT_X_REF_MAX_BACK = 122
-MIDDLE_X_REF_MIN_BACK = 123
-MIDDLE_X_REF_MAX_BACK = 191
-RIGHT_X_REF_MIN_BACK = 195
-RIGHT_X_REF_MAX_BACK = 240
+
+LEFT_X_REF_MIN_BACK = 30
+LEFT_X_REF_MAX_BACK = 107
+MIDDLE_X_REF_MIN_BACK = 109
+MIDDLE_X_REF_MAX_BACK = 169
+RIGHT_X_REF_MIN_BACK = 170
+RIGHT_X_REF_MAX_BACK = 233
 
 # Signature for the ball we're interested in
 ORANGE_BALL_SIGNATURE = 1
@@ -32,6 +36,42 @@ PURPLE_AND_ORANGE_BALL_SIG_MAP = 3
 
 # Create the object for the camera
 pixy = Pixy2(port=1, i2c_address=0x54)
+
+
+
+def get_orange_and_purple_ball_cordinatees(blocks : list):
+
+    filtered_blocks = []
+    filterd_left_side_list = []
+
+
+    
+                                                 
+                    
+
+
+
+
+
+
+                    # filtered_blocks.append(block)
+                    # if len(filtered_blocks) >= blocks:
+                    #     return filtered_blocks
+                    # elif not filtered_blocks:
+                    #     return False
+
+
+def get_purple_ball_index(filtered_blocks : int):
+    if filtered_blocks:
+        for index, filtered_block in enumerate(filtered_blocks, 0):
+            if filtered_block.sig == 2:
+                return index   
+    elif not filtered_blocks:
+        return False
+    
+
+
+
 
 def scan_ball_position(blocks, mode):
     """Determines the position of the ball based on its x_center and mode."""
@@ -64,7 +104,7 @@ def scan_ball_position(blocks, mode):
 
 
     elif mode == "back":
-        if MIN_Y_REF <= y_center <= MAX_Y_REF:
+        if MIN_Y_REF_BACK <= y_center <= MAX_Y_REF_BACK:
             if blocks[0].sig == 1:
                 if LEFT_X_REF_MIN_BACK <= x_center <= LEFT_X_REF_MAX_BACK:
                     return "go_home_left"
@@ -101,7 +141,7 @@ def normal_camera_scan():
                 Scan.scan(position)
                 return True
         
-        elif nr_blocks == 2:
+        elif nr_blocks > 1:
             if blocks[0].sig == 2 and blocks[1].sig == 1 or blocks[0].sig == 1 and blocks[1].sig == 2:
                 if MIN_Y_REF <= blocks[0].y_center and blocks[1].y_center  <= MAX_Y_REF:
                     if LEFT_X_REF_MIN_NORMAL <= blocks[0].x_center <= LEFT_X_REF_MAX_NORMAL and LEFT_X_REF_MIN_NORMAL <= blocks[1].x_center <= LEFT_X_REF_MAX_NORMAL:
@@ -121,12 +161,14 @@ def normal_camera_scan():
                         if position:
                             Scan.scan(position)
                             return True
+                        return False
             
             else:
                 position = scan_ball_position(blocks, "normal")
                 if position:
                     Scan.scan(position)
                     return True
+                return False
 
         else:                
             handle_no_ball()
@@ -137,36 +179,40 @@ def normal_camera_scan():
 def back_camera_scan():
     """Scans for a ball in the back game field."""
     while True:
+        sleep(1)
         nr_blocks, blocks = pixy.get_blocks(ORANGE_BALL_SIGNATURE, 4)
         if nr_blocks == 1:
             position = scan_ball_position(blocks, "back")
             if position:
                 Scan.scan(position)
                 return True
+            return False
         elif nr_blocks > 2:
             if blocks[0].sig == 2 and blocks[1].sig == 1 or blocks[0].sig == 1 and blocks[1].sig == 2:
-                if LEFT_X_REF_MIN_BACK <= blocks[0].x_center <= LEFT_X_REF_MAX_BACK and LEFT_X_REF_MIN_BACK <= blocks[1].x_center <= LEFT_X_REF_MAX_BACK:
-                    Scan.scan("left_pp_and_o_ball")
-                    return True
-
-                elif MIDDLE_X_REF_MIN_BACK <= blocks[0].x_center <= MIDDLE_X_REF_MAX_BACK and MIDDLE_X_REF_MIN_BACK <= blocks[1].x_center <= MIDDLE_X_REF_MAX_BACK:
-                    Scan.scan("middle_pp_and_o_ball")
-                    return True
-
-                elif RIGHT_X_REF_MIN_BACK <= blocks[0].x_center <= RIGHT_X_REF_MAX_BACK and RIGHT_X_REF_MIN_BACK <= blocks[1].x_center <= RIGHT_X_REF_MAX_BACK:
-                    Scan.scan("right_pp_and_o_ball")
-                    return True
-
-                else:
-                    position = scan_ball_position(blocks, "normal")
-                    if position:
-                        Scan.scan(position)
+                if MIN_Y_REF_BACK <= blocks[0].y_center and blocks[1].y_center <= MAX_Y_REF_BACK:
+                    if LEFT_X_REF_MIN_BACK <= blocks[0].x_center <= LEFT_X_REF_MAX_BACK and LEFT_X_REF_MIN_BACK <= blocks[1].x_center <= LEFT_X_REF_MAX_BACK:
+                        Scan.scan("left_pp_and_o_ball")
                         return True
+
+                    elif MIDDLE_X_REF_MIN_BACK <= blocks[0].x_center <= MIDDLE_X_REF_MAX_BACK and MIDDLE_X_REF_MIN_BACK <= blocks[1].x_center <= MIDDLE_X_REF_MAX_BACK:
+                        Scan.scan("middle_pp_and_o_ball")
+                        return True
+
+                    elif RIGHT_X_REF_MIN_BACK <= blocks[0].x_center <= RIGHT_X_REF_MAX_BACK and RIGHT_X_REF_MIN_BACK <= blocks[1].x_center <= RIGHT_X_REF_MAX_BACK:
+                        Scan.scan("right_pp_and_o_ball")
+                        return True
+
+                    else:
+                        position = scan_ball_position(blocks, "back")
+                        if position:
+                            Scan.scan(position)
+                            return True
+                else:
+                    return False
             else:
                 return False
         else:
             return False
-
 
 
 def purple_ball_camera_scan():
@@ -189,7 +235,7 @@ def handle_no_ball():
     """Handles the case when no ball is detected in the normal scan."""
     start_time = time()
     check_interval = 2  # seconds
-    total_wait_time = 6  # seconds
+    total_wait_time = 10  # seconds
 
     while time() - start_time < total_wait_time:
         nr_blocks, blocks = pixy.get_blocks(ORANGE_BALL_SIGNATURE, 4)
@@ -201,3 +247,4 @@ def handle_no_ball():
     # No ball detected within the 6-second window, proceed with normal handling
     Scan.scan("go_back_to_scan")
 
+ 

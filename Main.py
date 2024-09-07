@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+
+"""The Main Game File"""
+
+#Importing The required modules
 from time import sleep
 import time     
 from Movement_Methods import Movement
@@ -15,60 +19,60 @@ from pixycamev3.pixy2 import Pixy2DataError
 from Blind_Scan import blind_scan
 from ev3dev2.sound import Sound
 import Scan
+
+
+#Initilizing the speaker to play some sounds
 speaker = Sound()
+
+#Initilizing the movement class to use the touch sensor
 movement = Movement()
 
 #Initilizing The Pixy
 pixy2 = Pixy2(port=1,i2c_address=0x54)
 
 
+
+#Getting the balls X-Y to use it in the pixy code
 def get_Ball_pos():
+    """A function for debugging"""
     while True:
         # Retrieve the number of detected blocks and the block data
         sleep(1)
+
         nr_blocks, blocks = pixy2.get_blocks(1, 3)
+        
         if nr_blocks == 1:
-            print(blocks[0].y_center)
-
+            print(blocks[0].x_center)
         if nr_blocks == 0:
-            print("no")
+            print("no") 
 
 
-#Variables To Setup A Timer
-start_time= time.time()
-duration = 120 # seconds
 
 
-def main_game_with_pixy():
-    """Makes A Full 2 Mins Game Using The Pixy"""
-    start_game()
-    while time.time() - start_time < duration:
-        normal_camera_scan()
 
-    else:
-        Stop_Game()
-        quit()
 
-LEFT_X_REF_MIN_NORMAL = 22
-LEFT_X_REF_MAX_NORMAL =  98
-MIDDLE_X_REF_MIN_NORMAL = 99
-MIDDLE_X_REF_MAX_NORMAL = 186
-RIGHT_X_REF_MIN_NORMAL = 187
-RIGHT_X_REF_MAX_NORMAL = 273
+ 
 
 
 
         
 if __name__ == "__main__":
 
+    #Plays a sound to notifiy team that the game has started 
     speaker.play_file("rampbotsound.wav")
     print("started")
 
-    #Checks The Touch Sensor Is Pr5essed Then Released To Start The Game
-    while True:
-        
+    #Checks The Touch Sensor Is Pressed Then Released To Start The Game
+    while True: 
         if movement.TouchSensor.is_pressed:
-            while True:
-                if movement.TouchSensor.is_released:
-                    while True:
-                        get_Ball_pos()
+            if movement.TouchSensor.is_released:
+                start_game()               
+                while True:
+
+                #     #Does the game for 30 second and after the 30 second the robot
+                    start_time = time.time()
+                    while time.time() - start_time < 30:
+                        normal_camera_scan()
+                    else:
+                        Scan.scan("get_balls_from_the_corner")
+                        continue

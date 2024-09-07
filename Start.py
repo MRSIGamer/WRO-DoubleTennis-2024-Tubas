@@ -26,12 +26,15 @@ right_ball_y_ref_max_B = 95
 
 pixy = Pixy2(port=1, i2c_address=0x54)
 
+
+#Gets the purple ball index in the blocks list
 def get_purple_ball_index(blocks : list):
-    for i in blocks:
-        if i.sig == 2:
+    """Searching for the purple block index / place in the blocks list since there is no way to find it"""
+    for block in blocks:
+        if block.sig == 2:
             try:
-                if MIN_Y_REF <= i.y_center <= MAX_Y_REF:
-                    return i
+                if MIN_Y_REF <= block.y_center <= MAX_Y_REF:
+                    return block
                 else:
                     return False 
             except AttributeError:
@@ -39,8 +42,12 @@ def get_purple_ball_index(blocks : list):
                 
 
 def start_game():
+    """Starting The Game Using The Pixy Cam"""
+
     while True:
         nr_blocks, blocks = pixy.get_blocks(3, 3)
+
+        #Checks if there is only 2 balls in the start of the game and that means that there is no purple balls in the robot side
         if nr_blocks == 2:
             if blocks[0].sig == 1 and blocks[1].sig == 1:
                 if MIN_Y_REF <= blocks[0].y_center and blocks[1].y_center <= MAX_Y_REF:
@@ -67,7 +74,7 @@ def start_game():
                     
         
 
-
+        #Checks if the number of balls in the start is 3 since that means that the robot has a purple ball in his field
         elif nr_blocks == 3:
             pp_index = get_purple_ball_index(blocks)
 
@@ -101,7 +108,8 @@ def start_game():
                         scan("quick_start_left")
                         return True
 
-
+            
+            #Handeling any error using the exeptional handeling
             elif pp_index == 1:
                 continue
 
